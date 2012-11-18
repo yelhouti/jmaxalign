@@ -2,5 +2,17 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="lib" path="/home/max/alignment/Jalign/jars/berkeleyaligner.jar"/>
+	<classpathentry kind="lib" path="/home/max/alignment/Jalign/jars/bliki-core-3.0.17.jar"/>
+	<classpathentry kind="lib" path="/home/max/alignment/Jalign/jars/commons-compress-1.3.jar"/>
+	<classpathentry kind="lib" path="/home/max/alignment/Jalign/jars/create_phrasedb.jar"/>
+	<classpathentry kind="lib" path="/home/max/alignment/Jalign/jars/MyFile.jar"/>
+	<classpathentry kind="lib" path="/home/max/alignment/Jalign/jars/optimize_terp.jar"/>
+	<classpathentry kind="lib" path="/home/max/alignment/Jalign/jars/stanford-classifier.jar"/>
+	<classpathentry kind="lib" path="/home/max/alignment/Jalign/jars/supervisedBerkley.jar"/>
+	<classpathentry kind="lib" path="/home/max/alignment/Jalign/jars/tercom.7.25.jar"/>
+	<classpathentry kind="lib" path="/home/max/alignment/Jalign/jars/tercom.jar"/>
+	<classpathentry kind="lib" path="/home/max/alignment/Jalign/jars/terp.jar"/>
+	<classpathentry kind="lib" path="/home/max/alignment/Jalign/jars/unsupervisedBerkley.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
