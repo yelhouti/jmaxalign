@@ -3,6 +3,8 @@ package lexicalsimilarity;
 import java.io.*;
 import java.util.*;
 
+import main.NewCommandLineArguments;
+
 import objects.NewSentence;
 import objects.NewSentencePair;
 import objects.Sentence;
@@ -21,16 +23,16 @@ public class Scorer {
 	public LanguageModel l1Model, l2Model;
 
 
-	JAlignFilePaths j = JAlignFilePaths.getInstance();
-	
+	NewCommandLineArguments cmdArgs;	
 
-	public Scorer(String lang1, String lang2){
-		l1 = lang1;
-		l2 = lang2;
 
+	public Scorer(NewCommandLineArguments cmd ){
+		l1 = cmd.getL1();
+		l2 = cmd.getL2();
+		cmdArgs = cmd;
 
 		//Load the words and phraes generaetd from training into memory
-		loadPhrasesIntoMemory();
+		//loadPhrasesIntoMemory();
 		loadWordsIntoMemory();
 
 		//		//Build Language Moels
@@ -44,12 +46,11 @@ public class Scorer {
 	}
 
 
-	public void score(String dataType, String l1SenPath, String l2SenPath, String outputPath){
+	public void score(String dataType, String l1SenPath, String l2SenPath,  PrintWriter dataWriter){
 		try{
 			BufferedReader l1_reader = new BufferedReader(new FileReader(new File(l1SenPath)));
 			BufferedReader l2_reader = new BufferedReader(new FileReader(new File(l2SenPath)));
 			String statistic;
-			PrintWriter dataWriter = new PrintWriter(new FileWriter(new File(outputPath), true));
 			String l1_sentence, l2_sentence;
 			int i = 0;
 			while ((l1_sentence = l1_reader.readLine()) != null){
@@ -57,8 +58,8 @@ public class Scorer {
 				l2_sentence = l2_reader.readLine();
 				statistic = computeLexicalSimilarity(l1_sentence, l2_sentence).outputForClassification();
 				dataWriter.println(dataType + "\t" + statistic);
-//				statistic = compLexSimReturnSentencePair(l1_sentence, l2_sentence).outputForSVMClassification();
-//				dataWriter.println(statistic + "," + dataType);
+				//				statistic = compLexSimReturnSentencePair(l1_sentence, l2_sentence).outputForSVMClassification();
+				//				dataWriter.println(statistic + "," + dataType);
 				dataWriter.flush();
 			}
 			dataWriter.flush();
@@ -76,7 +77,7 @@ public class Scorer {
 	}
 
 
-	
+
 	public NewSentencePair computeLexicalSimilarity(String l1Sen, String l2Sen){
 
 		NewSentence[] sentences = new NewSentence[2];
@@ -281,14 +282,13 @@ public class Scorer {
 	private void loadWordsIntoMemory(){
 		L1toL2LexWeights = loadWeightsIntoMemory(l1, .3);
 		L2toL1LexWeights= loadWeightsIntoMemory(l2, .3);
-
 	}
 
 	public HashMap<String, HashMap<String, Double>> loadWeightsIntoMemory(String lang,  double thresh){
 		HashMap<String, HashMap<String, Double>> everything = new HashMap<String, HashMap<String, Double>>();
 		HashMap<String, Double> translations = new HashMap<String, Double>();
 		try{
-			BufferedReader wordFile = new BufferedReader(new FileReader(j.getGeneratedLexWeightsPath(lang, l1, l2)));
+			BufferedReader wordFile = new BufferedReader(new FileReader(cmdArgs.getGoodLexweightsPath(lang)));
 			String line;
 
 			line = wordFile.readLine();
@@ -328,7 +328,7 @@ public class Scorer {
 
 	private void loadPhrasesIntoMemory(){
 		try{
-			BufferedReader phraseFile = new BufferedReader(new FileReader(j.getGeneratedPhrasePath(l1, l2)));
+			BufferedReader phraseFile = new BufferedReader(new FileReader(""));
 			String line;
 
 			while ((line = phraseFile.readLine()) != null){

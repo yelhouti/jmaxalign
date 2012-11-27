@@ -1,13 +1,18 @@
 package utils;
 
-import info.bliki.wiki.dump.WikiXMLParser;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.util.regex.Pattern;
+import main.NewCommandLineArguments;
 
 public class JAlignFilePaths {
+
+
+	public NewCommandLineArguments c;
+	public NewCommandLineArguments getC() {
+		return c;
+	}
+
+	public void setC(NewCommandLineArguments c) {
+		this.c = c;
+	}
 
 
 	private static JAlignFilePaths instance = new JAlignFilePaths();
@@ -291,7 +296,7 @@ public class JAlignFilePaths {
 	public static String getClassifierTestPath(String l1, String l2){
 		return getCorporaPath(l1, l2) + "classify/test.prop";
 	}
-
+	
 	
 	public static String getClassifierDevPath(String l1, String l2){
 		return getCorporaPath(l1, l2) + "classify/dev.prop";

@@ -6,307 +6,215 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 import lexicalsimilarity.Scorer;
 import lexicalsimilarity.Trainer;
-import objects.NewSentencePair;
-import utils.CreateCorpora;
 import utils.Fscore;
 import utils.JAlignFilePaths;
 import utils.JAlignFileUtils;
-import classify.ClassifierTrainer;
+import classify.ClassifierWrapper;
 
 public class JAligner{
 
 	JAlignFilePaths j = JAlignFilePaths.getInstance();
-	CommandLineArguments cmdArgs;
-	String l1;
-	String l2;
+	NewCommandLineArguments cmdArgs;
 	//some Variables that govern the settings of an indvidual run 
 	int numPositiveTrainingSentences;
 	int numPositiveTestingSentences ;//how many sentences to train/test with 
 	int numNegativeTrainingSentences;
 	int numNegativeTestingSentences;
-	String testingCorpus, trainingCorpus;
-	boolean munteauTesting;
-	boolean munteauTraining;
-	String  positiveL1TestingPath;
-	String  positiveL2TestingPath;
-	String  positiveL1TrainingPath;
-	String  positiveL2TrainingPath;
+	boolean munteauTesting = false;
+	boolean munteauTraining = false; 
+	String  positiveL1TestingFile;
+	String  positiveL2TestingFile;
+	String  positiveL1TrainingFile;
+	String  positiveL2TrainingFile;
+	String  positiveL1EvalFile;
+	String  positiveL2EvalFile;
+	
+	String negativeL1TestingFile;
+	String negativeL2TestingFile;
+	String negativeL1TrainingFile;
+	String negativeL2TrainingFile;
 
-	String negativeL1TestingPath;
-	String negativeL2TestingPath;
-	String negativeL1TrainingPath;
-	String negativeL2TrainingPath;
+	String negativeL1EvalFile;
+	String negativeL2EvalFile;
 
-	String devl1Path, devl2Path;
 
-	//	public static void main(String[] args){
-	//
-	//		JAlignFilePaths.setRoot(args[0]);
-	//		int nPositiveTrainingSentences = Integer.parseInt(args[1]);
-	//		int nPositiveTestingSentences =  Integer.parseInt(args[2]);
-	//		int nNegativeTrainingSentences =  Integer.parseInt(args[3]);
-	//		int nNegativeTestingSentences =  Integer.parseInt(args[4]);
-	//		String teCorpus = args[5];
-	//		String trCorpus = args[6];
-	//		boolean munteauTesting = Boolean.parseBoolean(args[7]);
-	//		boolean munteauTraining = Boolean.parseBoolean(args[8]);
-	//
-	//
-	//		JAligner jal = new JAligner(args[9], args[10]);
-	//		jal.configureFeatures(nPositiveTrainingSentences, nPositiveTestingSentences, 
-	//				nNegativeTrainingSentences, nNegativeTestingSentences,
-	//				munteauTesting, munteauTraining, teCorpus, trCorpus);
-	//		if (args[11].equals("-setup"))
-	//			jal.run(true);
-	//		else if (args[11].equals("-full"))
-	//			jal.run(false);
-	//		else{
-	//			System.err.println("Last option must be either -setup or -full");
-	//			System.exit(0);
-	//		}
-	//		//score it
-	//		
-	//		DateFormat dateFormat = new SimpleDateFormat("MM.dd-HH:mm:ss-");
-	//		Date date = new Date();
-	//		System.out.println();
-	//		String logpath = dateFormat.format(date);
-	//		for (int i = 1; i <args.length;i++){
-	//			logpath+=args[i] + "-";
-	//		}
-	//
-	//		Fscore f = new Fscore(jal.l1 + "-" + jal.l2  +logpath) ;
-	//		f.getScores(jal.l1, jal.l2);
-	//
-	//
-	//	}
 
 	public static void main(String[] args){
 
-		try{
-			BufferedReader b = new BufferedReader(new FileReader(new File(args[0])));
-			String line ="";
-			CommandLineArguments c = new CommandLineArguments();
-			while ((line=b.readLine()) != null){
-				if (c.parseLine(line) == false)
-					System.out.println("Could not parse line: " + line);
-			}
+		NewCommandLineArguments c = new NewCommandLineArguments(args[0]);
 
-			c.alphabeticalOrder();
-			JAlignFilePaths.setRoot(c.getRoot());
-			JAligner jal = new JAligner(c);
-
-			if (args[1].equals("-train"))
-				jal.train();
-			else if (args[1].equals("-test"))
-				jal.test();
-			else if (args[1].equals("-create")){
-				if (c.getDevCorpus())
-					jal.evaluate();
-				else{
-					System.out.println("devcorpus must be set to true in the config file, and there must be a parallel."
-							+ c.getL1() + " and a parallel. " + c.getL2() + "in the dev/ folder");
-					System.exit(0);
-				}
-			}
-			else{
-				System.err.println("Last option must be either -train, -test -create");
-				System.exit(0);
-			}
-
+		//Get word alignetmsn
+		if (args[1].equals("-setup")){
+			Trainer wordAligner = new Trainer(c);
+			wordAligner.generateConfigFile();
+			wordAligner.generateWordAlignments();
 		}
-		catch(IOException e){
+		JAligner jmaxalign = new JAligner(c);
+		if (args[1].equals("-train")){
+			jmaxalign.train();
+		}
+		if (args[1].equals("-test")){
+			jmaxalign.test();
+		}
+		if (args[1].equals("-eval")){
+			jmaxalign.eval();
+		}
+
+
+
+
+	}
+
+	public JAligner(NewCommandLineArguments c){
+		cmdArgs = c;
+		numPositiveTrainingSentences	= 	c.getPositiveTrainingSentences();
+		numPositiveTestingSentences		= 	c.getPositiveTestingSentences();
+		numNegativeTrainingSentences 	= 	c.getNegativeTrainingSentences();
+		numNegativeTestingSentences 	= 	c.getNegativeTestingSentences();
+
+		positiveL1TestingFile			= 	c.getL1TestAbsoluteFile();
+		negativeL1TestingFile			= 	c.getTestDir() +  "neg-" + c.getL1TestFileName();
+		positiveL2TestingFile			= 	c.getL2TestAbsoluteFile();
+		negativeL2TestingFile			= 	c.getTestDir() + "neg-" + c.getL2TestFileName();
+		
+		positiveL2TrainingFile			=	c.getL2TrainAbsoluteFile();
+		negativeL2TrainingFile			= 	c.getTrainDir()  + "neg-" + c.getL2TrainFileName();
+		positiveL1TrainingFile			= 	c.getL1TrainAbsoluteFile();
+		negativeL1TrainingFile			= 	c.getTrainDir() + "neg-" + c.getL1TrainFileName();
+		
+		positiveL1EvalFile			=	c.getL2TrainAbsoluteFile();
+		negativeL1EvalFile			= 	c.getEvalDir()  + "neg-" + c.getL2EvalFileName();
+		positiveL2EvalFile			= 	c.getL1TrainAbsoluteFile();
+		negativeL2EvalFile			= 	c.getEvalDir() + "neg-" + c.getL1EvalFileName();
+
+
+	}
+
+	public void train(){
+
+		try {
+			String l1 = cmdArgs.getL1();
+			String l2 = cmdArgs.getL2();
+			//Make Negative Examples
+			JAlignFileUtils.executeBashCommand("mv " + cmdArgs.getBadLexweightsPath(l1) + " " + cmdArgs.getGoodLexweightsPath(l1));
+			JAlignFileUtils.executeBashCommand("mv " + cmdArgs.getBadLexweightsPath(l2) + " " + cmdArgs.getGoodLexweightsPath(l2));
+			System.out.println("Generating Negative training examples...");
+			generateNegativeSentences(0);
+			System.out.println("Generating Negative testing examples...");
+			generateNegativeSentences(1);
+
+			ClassifierWrapper standfordClassifier = new ClassifierWrapper(cmdArgs);
+			standfordClassifier.generateConfigFile();
+			Scorer s = new Scorer(cmdArgs);
+			PrintWriter dataWriter = new PrintWriter(new FileWriter(new File(cmdArgs.getClassifierTrainFile())));
+
+			s.score("parallel", positiveL1TrainingFile, positiveL2TrainingFile, dataWriter);
+			s.score("nonparallel", negativeL1TrainingFile, negativeL2TrainingFile, dataWriter);
+			dataWriter.flush();
+			dataWriter.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 
-	}
 
-	public JAligner(CommandLineArguments c){
-		cmdArgs = c;
-		l1=c.getL1();
-		l2=c.getL2();
-		numPositiveTrainingSentences = c.getPositiveTrainingSentences();
-		numPositiveTestingSentences =  c.getPositiveTestingSentences();
-		numNegativeTrainingSentences = c.getNegativeTrainingSentences();
-		numNegativeTestingSentences =   c.getNegativeTestingSentences();
-		testingCorpus= c.getTestingCorpus();
-		trainingCorpus= c.getTrainigCorpus();
-		munteauTesting= c.getMunteauTesting();
-		munteauTraining = c.getMunteauTraining();
-		positiveL1TestingPath= 		j.getPositiveDataFile(l1, l1, l2, "test",  testingCorpus, numPositiveTestingSentences);
-		positiveL2TestingPath= 		j.getPositiveDataFile(l2, l1, l2, "test",  testingCorpus, numPositiveTestingSentences);
-		positiveL1TrainingPath= 	j.getPositiveDataFile(l1, l1, l2, "train",  trainingCorpus, numPositiveTrainingSentences);
-		positiveL2TrainingPath=		j.getPositiveDataFile(l2, l1, l2, "train",  trainingCorpus, numPositiveTrainingSentences);
 
-		negativeL1TestingPath= 		j.getNegativeDataFile(l1, l1, l2, "test", munteauTesting, testingCorpus, numNegativeTestingSentences);
-		negativeL2TestingPath= 		j.getNegativeDataFile(l2, l1, l2, "test", munteauTesting, testingCorpus, numNegativeTestingSentences);
-		negativeL1TrainingPath= 		j.getNegativeDataFile(l1, l1, l2, "train", munteauTraining, trainingCorpus, numNegativeTrainingSentences);
-		negativeL2TrainingPath= 		j.getNegativeDataFile(l2, l1, l2, "train", munteauTraining, trainingCorpus, numNegativeTrainingSentences);
-		devl1Path  = j.getDevFile(l1, l1, l2);
-		devl2Path = j.getDevFile(l2, l1, l2);
+
 
 	}
 
-
-
-	public  void train(){
-
-		String cleanpath = j.getCleanSriptPath(l1, l2);
-		JAlignFileUtils.executeBashCommand(cleanpath);
-
-		//Generate data for training
-		generatePositiveTestingAndTrainingData();
-
-		//Train with Berkeley aligner
-		Trainer LX  = new Trainer(l1, l2);
-
-	}
-	public void test(){
-
-		//Make Negative Examples
-		JAlignFileUtils.executeBashCommand("mv " + j.getBadLexweightsPath(l1, l1, l2) + " " + j.getGoodLexweightsPath(l1, l1, l2));
-		JAlignFileUtils.executeBashCommand("mv " + j.getBadLexweightsPath(l2, l1, l2) + " " + j.getGoodLexweightsPath(l2, l1, l2));
-		System.out.println("Generating Negative training examples...");
-		generateNegativeSentences(true);
-		System.out.println("Generating Negative testing examples...");
-		generateNegativeSentences(false);
-
-		Scorer S = new Scorer(l1, l2);
-		System.out.println("Scoring positive training data...");
-		S.score("parallel", positiveL1TrainingPath, positiveL2TrainingPath, j.getClassifierTrainPath(l1, l2) );
-		System.out.println("Scoring positive testing data...");
-		S.score("parallel", positiveL1TestingPath,positiveL2TestingPath,  j.getClassifierTestPath(l1, l2) );
-		System.out.println("Scoring negative testing  data...");
-		S.score("nonparallel", negativeL1TestingPath, negativeL2TestingPath,  j.getClassifierTestPath(l1, l2) );
-		System.out.println("Scoring negative training data...");
-		S.score("nonparallel",	negativeL1TrainingPath, negativeL2TrainingPath,  j.getClassifierTrainPath(l1, l2) );
-
-		//Train the Stanford classifier
-		ClassifierTrainer.classify(l1, l2);
-
-		Fscore f = new Fscore(l1 + "-" + l2  + "-" + cmdArgs.toString()) ;
-		f.getScores(l1, l2);
-
-	}
-
-	public  void evaluate(){
-		Scorer S = new Scorer(l1, l2);
-		System.out.println("Scoring Evaluation Data");
-		S.score("unknown", devl1Path, devl2Path, j.getClassifierDevPath(l1, l2));
-		ClassifierTrainer.classifyDev(l1, l2);
-		CreateCorpora maker = new CreateCorpora(l1,l2);
-		maker.create();
-	}
-
-
-
-
-	public void generatePositiveTestingAndTrainingData(){
-
-		boolean switchedToTest = false;
+	public void eval(){
 		try{
-			BufferedReader tmxReader = new BufferedReader(new FileReader(new File(j.getTMXPath(l1, l2, trainingCorpus))));
+			Scorer s = new Scorer(cmdArgs);
+			PrintWriter dataWriter = new PrintWriter(new FileWriter(new File(cmdArgs.getClassifierEvalFile())));
+			s.score("parallel", positiveL1TestingFile, positiveL2TestingFile, dataWriter);
+			s.score("nonparallel", negativeL1TestingFile, negativeL2TestingFile, dataWriter);
+			dataWriter.flush();
+			dataWriter.close();
+			ClassifierWrapper standfordClassifier = new ClassifierWrapper(cmdArgs);
+			standfordClassifier.parseResults();
+			System.out.println(cmdArgs.getRoot() + "results.txt");
+			
+			Fscore.getScores(cmdArgs);
 
-			//			
-			PrintWriter l1_output = new PrintWriter(new FileWriter(new File(positiveL1TrainingPath), true));
-			PrintWriter l2_output = new PrintWriter(new FileWriter(new File(positiveL2TrainingPath), true));
-			//			
-			String line;
-
-			int i = 0;
-			while ((line = tmxReader.readLine()) != null){
-
-				//We parsed all the testing data we want
-				if (i>= numPositiveTrainingSentences && (!switchedToTest) ){
-					switchedToTest = true;
-
-					l1_output.flush();
-					l2_output.flush();
-					l1_output.close();
-					l2_output.close();
-					tmxReader = new BufferedReader(new FileReader(new File(j.getTMXPath(l1, l2, testingCorpus))));
-					l1_output = new PrintWriter(new FileWriter(new File(positiveL1TestingPath), true));
-					l2_output = new PrintWriter(new FileWriter(new File(positiveL2TestingPath), true));
-
-				}
-				//we also parsed all the training data
-				if (i>= (numPositiveTestingSentences + numPositiveTrainingSentences)  && (switchedToTest) ){
-					break;
-				}
-				//				if(line.contains("<tu>")){
-				//
-				//					String doc = xmldoc.toString();
-				//					l1_output.println(getSentences(doc));
-				//					//					l2_output.println(getSentences(l2));
-				//					xmldoc = new StringBuilder();
-				//					xmldoc.append(line);
-				//				}
-				//				else{
-				//					xmldoc.append(line + "\n");
-				//				}
-				if ( (!(line.contains("srclang"))) && (!(line.contains("adminlang"))) ){
-					if(line.contains("\"" + l1 + "\"")){				
-
-						line = line.replaceAll("<tuv xml:lang=\"" + l1 + "\">", "")
-								.replaceAll("</seg>","")
-								.replaceAll("<seg>", "").
-								replaceAll("</tuv>", "");
-						l1_output.println(line.trim());
-					}
-					if(line.contains("\"" + l2 + "\"")){
-						i++;
-						line = line.replaceAll("<tuv xml:lang=\"" + l2 + "\">", "")
-								.replaceAll("</seg>","")
-								.replaceAll("<seg>", "").
-								replaceAll("</tuv>", "");
-						l2_output.println(line.trim());
-					}
-				}
-			}
-			l1_output.flush();
-			l2_output.flush();
-			l1_output.close();
-			l2_output.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		catch(IOException e){System.out.println(e.getMessage());}
+	}
+	
+	public void test(){
+		try{
+			Scorer s = new Scorer(cmdArgs);
+			PrintWriter dataWriter = new PrintWriter(new FileWriter(new File(cmdArgs.getClassifierTestFile())));
+			s.score("unknown", positiveL1TestingFile, positiveL2TestingFile, dataWriter);
+			s.score("unknown", negativeL1TestingFile, negativeL2TestingFile, dataWriter);
+			dataWriter.flush();
+			dataWriter.close();
+			ClassifierWrapper standfordClassifier = new ClassifierWrapper(cmdArgs);
+			standfordClassifier.parseResults();
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 
-	public  void generateNegativeSentences(boolean training) {
+
+
+	
+
+
+
+
+
+
+	public  void generateNegativeSentences(int type) {
 		try{
 
-			Boolean munteau;
+
 			String l1SentencesPath;
 			String l2SentencesPath;
 			String l1NegSentencesPath;
 			String l2NegSentencesPath;
 			int maxSentences;
-			if(training){
-				munteau = munteauTraining;
-				l1SentencesPath= positiveL1TrainingPath;
-				l2SentencesPath= positiveL2TrainingPath;
-				l1NegSentencesPath= negativeL1TrainingPath;
-				l2NegSentencesPath= negativeL2TrainingPath;
+			if(type ==0){ //training
+				l1SentencesPath= positiveL1TrainingFile;
+				l2SentencesPath= positiveL2TrainingFile;
+				l1NegSentencesPath= negativeL1TrainingFile;
+				l2NegSentencesPath= negativeL2TrainingFile;
 				maxSentences = numNegativeTrainingSentences;
 			}
-			else{
-				munteau = munteauTesting;
-				l1SentencesPath= positiveL1TestingPath;
-				l2SentencesPath= positiveL2TestingPath;
-				l1NegSentencesPath= negativeL1TestingPath;
-				l2NegSentencesPath= negativeL2TestingPath;
+			else if (type ==1){ //testing 
+				l1SentencesPath= positiveL1TestingFile;
+				l2SentencesPath= positiveL2TestingFile;
+				l1NegSentencesPath= negativeL1TestingFile;
+				l2NegSentencesPath= negativeL2TestingFile;
 				maxSentences = numNegativeTestingSentences;
-
+			}
+			else if (type ==2){ //eval 
+				l1SentencesPath= positiveL1TestingFile;
+				l2SentencesPath= positiveL2TestingFile;
+				l1NegSentencesPath= negativeL1TestingFile;
+				l2NegSentencesPath= negativeL2TestingFile;
+				maxSentences = numNegativeTestingSentences;
+			}
+			else{
+				l1SentencesPath= null;
+				l2SentencesPath= null;
+				l1NegSentencesPath= null;
+				l2NegSentencesPath= null;
+				maxSentences = 0;
 			}
 
-			Scorer scorer = new Scorer(l1, l2);
+
+
 			BufferedReader l1_input = new BufferedReader(new FileReader(new File(l1SentencesPath)));
 			BufferedReader l2_input = new BufferedReader(new FileReader(new File(l2SentencesPath)));
 			PrintWriter l1_writer = new PrintWriter(new FileWriter(new File(l1NegSentencesPath), true));
@@ -327,24 +235,12 @@ public class JAligner{
 					if (currentSentences == maxSentences)
 						break;
 					else{
-						if (munteau){
-							int l1Len = l1Sen.split(" ").length;
-							int l2Len = l2Sen.split(" ").length;
-							float ratio = divideIntegers(l1Len, l2Len);
-							if ( ratio < 200  ){
-								NewSentencePair sp = scorer.computeLexicalSimilarity(l1Sen, l2Sen);
-								if (sp.percentageUnAlignedWords() < 50){
-									l1_writer.println(l1Sen);
-									l2_writer.println(l2Sen);
-									currentSentences++;
-								}
-							}
-						}
-						else{
-							l1_writer.println(l1Sen);
-							l2_writer.println(l2Sen);
-							currentSentences++;
-						}
+
+
+						l1_writer.println(l1Sen);
+						l2_writer.println(l2Sen);
+						currentSentences++;
+
 					}
 				}
 			}

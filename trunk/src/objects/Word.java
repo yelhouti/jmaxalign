@@ -1,6 +1,5 @@
 package objects;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Word {
@@ -13,8 +12,8 @@ public class Word {
 	private boolean stopWord = false;
 	private boolean outOfVocabularyWord = false;
 
-	
-	
+
+
 
 
 	public void addAlignedWord(Word w, double d){
@@ -76,7 +75,7 @@ public class Word {
 			}
 			return score;
 		}
-			
+
 	}
 	public void setAlignmentScore(double alignmentScore) {
 		this.alignmentScore = alignmentScore;
