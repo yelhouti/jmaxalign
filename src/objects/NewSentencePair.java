@@ -31,10 +31,10 @@ public class NewSentencePair {
 	}
 	public String outputForClassification(){
 		String s = "";
-		s+= l1Sentence.getLength();
-		s+="\t";
-		s+= l2Sentence.getLength();
-		s+="\t";
+//		s+= l1Sentence.getLength();
+//		s+="\t";
+//		s+= l2Sentence.getLength();
+//		s+="\t";
 		s+= lengthDifference();
 		s+="\t";
 		s+= lengthRatio();

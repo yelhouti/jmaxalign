@@ -102,6 +102,36 @@ public class ClassifierWrapper{
 		}
 	}
 	
+	public void parseResultsEval(){
+		try{
+			JAlignFilePaths j = JAlignFilePaths.getInstance();
+
+
+			PrintWriter out = new PrintWriter(new FileWriter(new File(cmdArgs.getClassifierOutputRawFile())));
+
+			//	generateConfigFile(l1,l2);
+			ColumnDataClassifier cdc = new ColumnDataClassifier(cmdArgs.getClassifierPropertiesFile());
+			Classifier<String,String> cl =
+					cdc.makeClassifier(cdc.readTrainingExamples(cmdArgs.getClassifierTrainFile()));
+			ArrayList<Integer> correctLines = new ArrayList<Integer>();
+			int i = 0;
+			for (String line : ObjectBank.getLineIterator(cmdArgs.getClassifierEvalFile())) {
+				i++;
+				Datum<String,String> d = cdc.makeDatumFromLine(line, 0);
+				if (cl.classOf(d).equals("parallel")){
+					correctLines.add(i);
+				}
+				out.println(line + "  ==>  " + cl.classOf(d));
+			}
+			score(cmdArgs.getL1TestAbsoluteFile(), cmdArgs.getL2TestAbsoluteFile(), cmdArgs.getClassifierOutputUsableFile(), correctLines);
+			
+			
+			out.flush();
+		}
+		catch(IOException e){System.out.println(e.getMessage());
+		}
+	}
+	
 
 	public void score(String l1SenPath, String l2SenPath, String outputPath, ArrayList<Integer> correctLines){
 		try{

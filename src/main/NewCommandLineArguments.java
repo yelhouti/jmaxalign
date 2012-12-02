@@ -45,7 +45,7 @@ public class NewCommandLineArguments {
 			if (!train.exists()){
 				train.mkdir();	
 			}
-			evalDir = train.getAbsolutePath() + "/";
+			evalDir = eval.getAbsolutePath() + "/";
 			
 
 			File classify = new File(root + "classify/");
@@ -60,8 +60,8 @@ public class NewCommandLineArguments {
 			l2TrainFile = trainFilePath + l2TrainFileName;
 			l1TestFile = testFilePath + l1TestFileName;
 			l2TestFile = testFilePath + l2TestFileName;
-			l1EvalFile = evalDir+ l1TestFileName;
-			l2EvalFile = evalDir + l2TestFileName;
+			l1EvalFile = evalDir+ l1EvalFileName;
+			l2EvalFile = evalDir + l2EvalFileName;
 			
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -245,8 +245,6 @@ public class NewCommandLineArguments {
 	public void setTestFilePath(String testFilePath) {
 		this.testFilePath = testFilePath;
 	}
-
-
 	public String getClassifyFilePath() {
 		return classifyDir;
 	}
@@ -279,6 +277,30 @@ public class NewCommandLineArguments {
 	private Integer negativeTrainingSentences;
 	private Integer positiveTestingSentences;
 	private Integer negativeTestingSentences;
+	private Integer positiveEvalSentences;
+	public Integer getPositiveEvalSentences() {
+		return positiveEvalSentences;
+	}
+
+
+
+	public void setPositiveEvalSentences(Integer positiveEvalSentences) {
+		this.positiveEvalSentences = positiveEvalSentences;
+	}
+
+
+
+	public Integer getNegativeEvalSentences() {
+		return negativeEvalSentences;
+	}
+
+
+
+	public void setNegativeEvalSentences(Integer negativeEvalSentences) {
+		this.negativeEvalSentences = negativeEvalSentences;
+	}
+
+	private Integer negativeEvalSentences;
 	
 
 
@@ -324,6 +346,14 @@ public class NewCommandLineArguments {
 		}
 		else if (field.equals("negativeTestingSentences")) {
 			negativeTestingSentences = Integer.parseInt(value);
+			parsed = true;
+		}
+		else if (field.equals("positiveEvalSentences")) {
+			positiveEvalSentences = Integer.parseInt(value);
+			parsed = true;
+		}
+		else if (field.equals("negativeEvalSentences")) {
+			negativeEvalSentences = Integer.parseInt(value);
 			parsed = true;
 		}
 		else if (field.equals("\n")) {
@@ -438,14 +468,23 @@ public class NewCommandLineArguments {
 
 	@Override
 	public String toString() {
-		return "NewCommandLineArguments [root=" + root + "\n, l1=" + l1 + "\n, l2="
-				+ l2 + "\n, l1Train=" + l1TrainFile + "\n, l2Train=" + l2TrainFile
-				+ "\n, l1Test=" + l1TestFile + "\n, l2Test=" + l2TestFile
-				+ "\n, positiveTrainingSentences=" + positiveTrainingSentences
-				+ "\n, negativeTrainingSentences=" + negativeTrainingSentences
-				+ "\n, positiveTestingSentences=" + positiveTestingSentences
-				+ "\n, negativeTestingSentences=" + negativeTestingSentences
-				+ "]";
+		return "NewCommandLineArguments [root=" + root + ",\n evalDir=" + evalDir
+				+ ",\n alignDir=" + alignDir + ",\n trainFilePath=" + trainFilePath
+				+ ",\n testFilePath=" + testFilePath + ",\n classifyDir="
+				+ classifyDir + ",\n l1=" + l1 + ",\n l2=" + l2 + ",\n l1TrainFile="
+				+ l1TrainFile + ",\n l2TrainFile=" + l2TrainFile
+				+ ",\n l1TestFile=" + l1TestFile + ",\n l2TestFile=" + l2TestFile
+				+ ",\n l1EvalFile=" + l1EvalFile + ",\n l2EvalFile=" + l2EvalFile
+				+ ",\n l1TrainFileName=" + l1TrainFileName + ",\n l2TrainFileName="
+				+ l2TrainFileName + ",\n l1TestFileName=" + l1TestFileName
+				+ ",\n l2TestFileName=" + l2TestFileName + ",\n l1EvalFileName="
+				+ l1EvalFileName + ",\n l2EvalFileName=" + l2EvalFileName
+				+ ",\n positiveTrainingSentences=" + positiveTrainingSentences
+				+ ",\n negativeTrainingSentences=" + negativeTrainingSentences
+				+ ",\n positiveTestingSentences=" + positiveTestingSentences
+				+ ",\n negativeTestingSentences=" + negativeTestingSentences
+				+ ",\n positiveEvalSentences=" + positiveEvalSentences
+				+ ",\n negativeEvalSentences=" + negativeEvalSentences + "]";
 	}
 
 
