@@ -65,7 +65,6 @@ public class Trainer{
 			configOutput.println("sentences	MAX");
 			configOutput.println("testSources	" + "");
 			configOutput.println("maxTestSentences	500");
-			configOutput.println("maxTrainSentences	10000");
 			configOutput.println("offsetTestSentences	0");
 			configOutput.println("saveLexicalWeights");
 			configOutput.println("competitiveThresholding");

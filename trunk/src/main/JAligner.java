@@ -2,11 +2,13 @@ package main;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import lexicalsimilarity.Scorer;
 import lexicalsimilarity.Trainer;
@@ -24,6 +26,8 @@ public class JAligner{
 	int numPositiveTestingSentences ;//how many sentences to train/test with 
 	int numNegativeTrainingSentences;
 	int numNegativeTestingSentences;
+	int numPositiveEvalSentences;
+	int numNegativeEvalSentences;
 	boolean munteauTesting = false;
 	boolean munteauTraining = false; 
 	String  positiveL1TestingFile;
@@ -32,7 +36,7 @@ public class JAligner{
 	String  positiveL2TrainingFile;
 	String  positiveL1EvalFile;
 	String  positiveL2EvalFile;
-	
+
 	String negativeL1TestingFile;
 	String negativeL2TestingFile;
 	String negativeL1TrainingFile;
@@ -46,7 +50,7 @@ public class JAligner{
 	public static void main(String[] args){
 
 		NewCommandLineArguments c = new NewCommandLineArguments(args[0]);
-
+		System.out.println(c);
 		//Get word alignetmsn
 		if (args[1].equals("-setup")){
 			Trainer wordAligner = new Trainer(c);
@@ -71,41 +75,42 @@ public class JAligner{
 
 	public JAligner(NewCommandLineArguments c){
 		cmdArgs = c;
-		numPositiveTrainingSentences	= 	c.getPositiveTrainingSentences();
-		numPositiveTestingSentences		= 	c.getPositiveTestingSentences();
 		numNegativeTrainingSentences 	= 	c.getNegativeTrainingSentences();
 		numNegativeTestingSentences 	= 	c.getNegativeTestingSentences();
+		numNegativeEvalSentences 	= 	c.getNegativeTestingSentences();
 
 		positiveL1TestingFile			= 	c.getL1TestAbsoluteFile();
 		negativeL1TestingFile			= 	c.getTestDir() +  "neg-" + c.getL1TestFileName();
 		positiveL2TestingFile			= 	c.getL2TestAbsoluteFile();
 		negativeL2TestingFile			= 	c.getTestDir() + "neg-" + c.getL2TestFileName();
-		
+
 		positiveL2TrainingFile			=	c.getL2TrainAbsoluteFile();
 		negativeL2TrainingFile			= 	c.getTrainDir()  + "neg-" + c.getL2TrainFileName();
 		positiveL1TrainingFile			= 	c.getL1TrainAbsoluteFile();
 		negativeL1TrainingFile			= 	c.getTrainDir() + "neg-" + c.getL1TrainFileName();
-		
-		positiveL1EvalFile			=	c.getL2TrainAbsoluteFile();
-		negativeL1EvalFile			= 	c.getEvalDir()  + "neg-" + c.getL2EvalFileName();
-		positiveL2EvalFile			= 	c.getL1TrainAbsoluteFile();
-		negativeL2EvalFile			= 	c.getEvalDir() + "neg-" + c.getL1EvalFileName();
 
+		positiveL2EvalFile			= 	c.getL2EvalFile();
+		negativeL2EvalFile			= 	c.getEvalDir() + "neg-" + c.getL2EvalFileName();
+		positiveL1EvalFile			=	c.getL1EvalFile();
+		negativeL1EvalFile			= 	c.getEvalDir()  + "neg-" + c.getL1EvalFileName();
 
 	}
 
 	public void train(){
 
 		try {
+			System.out.println("Generating Negative eval examples...");
+			generateNewNegativeSentences(numNegativeTrainingSentences, 
+					positiveL1TrainingFile,
+					positiveL2TrainingFile,
+					negativeL1TrainingFile,
+					negativeL2TrainingFile);
 			String l1 = cmdArgs.getL1();
 			String l2 = cmdArgs.getL2();
 			//Make Negative Examples
 			JAlignFileUtils.executeBashCommand("mv " + cmdArgs.getBadLexweightsPath(l1) + " " + cmdArgs.getGoodLexweightsPath(l1));
 			JAlignFileUtils.executeBashCommand("mv " + cmdArgs.getBadLexweightsPath(l2) + " " + cmdArgs.getGoodLexweightsPath(l2));
-			System.out.println("Generating Negative training examples...");
-			generateNegativeSentences(0);
-			System.out.println("Generating Negative testing examples...");
-			generateNegativeSentences(1);
+
 
 			ClassifierWrapper standfordClassifier = new ClassifierWrapper(cmdArgs);
 			standfordClassifier.generateConfigFile();
@@ -120,36 +125,43 @@ public class JAligner{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-
-
-
-
-
 	}
 
 	public void eval(){
 		try{
+			System.out.println();
+			System.out.println("Generating Negative eval examples...");
+			generateNewNegativeSentences(numNegativeEvalSentences, 
+					positiveL1EvalFile,
+					positiveL2EvalFile,
+					negativeL1EvalFile,
+					negativeL2EvalFile);
 			Scorer s = new Scorer(cmdArgs);
 			PrintWriter dataWriter = new PrintWriter(new FileWriter(new File(cmdArgs.getClassifierEvalFile())));
-			s.score("parallel", positiveL1TestingFile, positiveL2TestingFile, dataWriter);
-			s.score("nonparallel", negativeL1TestingFile, negativeL2TestingFile, dataWriter);
+			s.score("parallel", positiveL1EvalFile, positiveL2EvalFile, dataWriter);
+			s.score("nonparallel", negativeL1EvalFile, negativeL2EvalFile, dataWriter);
 			dataWriter.flush();
 			dataWriter.close();
 			ClassifierWrapper standfordClassifier = new ClassifierWrapper(cmdArgs);
-			standfordClassifier.parseResults();
+			standfordClassifier.parseResultsEval();
 			System.out.println(cmdArgs.getRoot() + "results.txt");
-			
-			Fscore.getScores(cmdArgs);
+
+			Fscore.getScores(cmdArgs);	
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void test(){
 		try{
+			System.out.println("Generating Negative training examples...");
+			generateNewNegativeSentences(numNegativeTestingSentences, 
+					positiveL1TestingFile,
+					positiveL2TestingFile,
+					negativeL1TestingFile,
+					negativeL2TestingFile);
 			Scorer s = new Scorer(cmdArgs);
 			PrintWriter dataWriter = new PrintWriter(new FileWriter(new File(cmdArgs.getClassifierTestFile())));
 			s.score("unknown", positiveL1TestingFile, positiveL2TestingFile, dataWriter);
@@ -166,14 +178,53 @@ public class JAligner{
 	}
 
 
+	public void generateNewNegativeSentences(int number, String l1In, String l2In, String l1Out, String l2Out){
+		try {
 
+			BufferedReader l1_input = new BufferedReader(new FileReader(new File(l1In)));
+			BufferedReader l2_input = new BufferedReader(new FileReader(new File(l2In)));
+			PrintWriter l1_writer = new PrintWriter(new FileWriter(new File(l1Out)));
+			PrintWriter l2_writer = new PrintWriter(new FileWriter(new File(l2Out)));
+			ArrayList<String> l1Sens = new ArrayList<String>();
+			ArrayList<String> l2Sens = new ArrayList<String>();
+			String line = "";
+			int i = 0;
+			while ((line = l1_input.readLine()) != null){
+				if (++i > number)
+					break;
+				l1Sens.add(line);
+			}
+			
+			i = 0;
+			while ((line = l2_input.readLine()) != null){
+				if (++i > number)
+					break;
+				l2Sens.add(line);
+			}
+			
+			assert(l1Sens.size() == l2Sens.size());
+			int firstIndex = 0;
+			int lastIndex = l1Sens.size();
+			for (; firstIndex  < l1Sens.size(); firstIndex++){
+				lastIndex--;
+				l1_writer.println(l1Sens.get(firstIndex));
+				l2_writer.println(l2Sens.get(lastIndex));
 
-	
+			}
+			
+			l1_writer.flush();
+			l1_writer.close();
+			l2_writer.flush();
+			l2_writer.close();
 
-
-
-
-
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 	public  void generateNegativeSentences(int type) {
 		try{
@@ -199,11 +250,11 @@ public class JAligner{
 				maxSentences = numNegativeTestingSentences;
 			}
 			else if (type ==2){ //eval 
-				l1SentencesPath= positiveL1TestingFile;
-				l2SentencesPath= positiveL2TestingFile;
-				l1NegSentencesPath= negativeL1TestingFile;
-				l2NegSentencesPath= negativeL2TestingFile;
-				maxSentences = numNegativeTestingSentences;
+				l1SentencesPath= positiveL1EvalFile;
+				l2SentencesPath= positiveL2EvalFile;
+				l1NegSentencesPath= negativeL1EvalFile;
+				l2NegSentencesPath= negativeL2EvalFile;
+				maxSentences = numNegativeEvalSentences;
 			}
 			else{
 				l1SentencesPath= null;
@@ -213,8 +264,10 @@ public class JAligner{
 				maxSentences = 0;
 			}
 
-
-
+			System.out.println(l1SentencesPath);
+			System.out.println(l2SentencesPath);
+			System.out.println(l1NegSentencesPath);
+			System.out.println(l2NegSentencesPath);
 			BufferedReader l1_input = new BufferedReader(new FileReader(new File(l1SentencesPath)));
 			BufferedReader l2_input = new BufferedReader(new FileReader(new File(l2SentencesPath)));
 			PrintWriter l1_writer = new PrintWriter(new FileWriter(new File(l1NegSentencesPath), true));
@@ -254,5 +307,7 @@ public class JAligner{
 	public static float divideIntegers(int i, int j){
 		return (float) i * 100.0f / (float) j;
 	}
+
+
 
 }

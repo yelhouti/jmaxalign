@@ -11,6 +11,10 @@ public class TMXParser {
 
 
 
+	public static void main(String[] args) {
+		String root = "/home/max/omg/subtitles/";
+		splitIntoTrainingAndTestingData("de", "he", root + "train/train.de", root + "train/train.he", root + "eval/eval.de", root + "eval/eval.he", 25000, 25000);
+	}
 	/**
 	 * This class can parse a TMX file downloadable from the Open Source Parallel Subtitles corpus V2,
 	 * and output the translation into two separate files. The locations of the files are determined by the FilePaths class.
@@ -25,12 +29,10 @@ public class TMXParser {
 		try{
 			JAlignFilePaths j = JAlignFilePaths.getInstance();
 
-			BufferedReader tmxReader = new BufferedReader(new FileReader(new File(j.getTMXPath(l1, l2, "x"))));
-		
-//			
+			BufferedReader tmxReader = new BufferedReader(new FileReader(new File("/home/max/finaltest/corpora/de-he/OpenSubtitles2011de-he.tmx")));			
 			PrintWriter l1_output = new PrintWriter(new FileWriter(new File(l1TrainOutputPath), true));
 			PrintWriter l2_output = new PrintWriter(new FileWriter(new File(l2TrainOutputPath), true));
-//			
+
 			String line;
 
 			int i = 0;
@@ -87,7 +89,9 @@ public class TMXParser {
 			l1_output.close();
 			l2_output.close();
 		}
-		catch(IOException e){System.out.println(e.getMessage());}
+		catch(IOException e){
+			e.printStackTrace();
+		}
 	}
 
 
