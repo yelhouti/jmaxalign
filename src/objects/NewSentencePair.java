@@ -1,7 +1,6 @@
 package objects;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.TreeSet;
 
@@ -187,7 +186,7 @@ public class NewSentencePair {
 
 		for (int i = 0; i < 2; i++){
 			NewSentence s = sentences.get(i);
-			for (Word w : sentences.get(i).getWords()){
+			for (Word w : s.getWords()){
 				if (w.isAligned()){
 					lcs[i]++;
 				}

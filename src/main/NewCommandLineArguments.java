@@ -148,8 +148,8 @@ public class NewCommandLineArguments {
 		return classifyDir + "results.txt";
 	}
 	
-	public String getClassifierOutputUsableFile(){
-		return classifyDir + "Parallel.txt";
+	public String getParallelSentenceFile(){
+		return classifyDir + "extracted-parallel-sentences.txt";
 	}
 
 

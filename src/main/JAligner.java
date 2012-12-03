@@ -8,40 +8,36 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashSet;
 
 import lexicalsimilarity.Scorer;
 import lexicalsimilarity.Trainer;
 import utils.Fscore;
-import utils.JAlignFilePaths;
-import utils.JAlignFileUtils;
 import classify.ClassifierWrapper;
 
 public class JAligner{
 
-	JAlignFilePaths j = JAlignFilePaths.getInstance();
 	NewCommandLineArguments cmdArgs;
 	//some Variables that govern the settings of an indvidual run 
-	int numPositiveTrainingSentences;
-	int numPositiveTestingSentences ;//how many sentences to train/test with 
+
+
 	int numNegativeTrainingSentences;
 	int numNegativeTestingSentences;
-	int numPositiveEvalSentences;
 	int numNegativeEvalSentences;
-	boolean munteauTesting = false;
-	boolean munteauTraining = false; 
+
+
 	String  positiveL1TestingFile;
 	String  positiveL2TestingFile;
 	String  positiveL1TrainingFile;
 	String  positiveL2TrainingFile;
-	String  positiveL1EvalFile;
-	String  positiveL2EvalFile;
+
 
 	String negativeL1TestingFile;
 	String negativeL2TestingFile;
 	String negativeL1TrainingFile;
 	String negativeL2TrainingFile;
 
+	String  positiveL1EvalFile;
+	String  positiveL2EvalFile;
 	String negativeL1EvalFile;
 	String negativeL2EvalFile;
 
@@ -50,28 +46,71 @@ public class JAligner{
 	public static void main(String[] args){
 
 		NewCommandLineArguments c = new NewCommandLineArguments(args[0]);
-		System.out.println(c);
 		//Get word alignetmsn
 		if (args[1].equals("-setup")){
+			System.out.println("Removing files from last run...");
+			cleanDirs(c);
+			System.out.println("Generating word alignments...");
 			Trainer wordAligner = new Trainer(c);
 			wordAligner.generateConfigFile();
+			System.out.println("Generating sentence features...");
+
 			wordAligner.generateWordAlignments();
 		}
 		JAligner jmaxalign = new JAligner(c);
 		if (args[1].equals("-train")){
+			System.out.println("Training a MaxEnt classifier...");
 			jmaxalign.train();
 		}
 		if (args[1].equals("-test")){
+			System.out.println("Evaluating test sentences...");
+
 			jmaxalign.test();
 		}
 		if (args[1].equals("-eval")){
+			System.out.println("Evaluating eval sentences...");
 			jmaxalign.eval();
 		}
-
-
-
-
 	}
+
+	public static void cleanDirs(NewCommandLineArguments args){
+		String l1 = args.getL1();
+		String l2 = args.getL2();
+		File f = new File(args.getRoot());
+		if (f.isDirectory()){
+			for (File dir : f.listFiles()){
+				if (dir.isDirectory()){
+					String name = dir.getName();
+					if (name.equals("train")){
+						for (File f2 : dir.listFiles()){
+							if (!f2.getName().equals("train." + l2) && !f2.getName().equals("train." + l1)){
+								System.out.println(f2 + " DELETED");
+								f2.delete();
+							}
+						}
+					}
+					else if (name.equals("test")){
+						for (File f2 : dir.listFiles()){
+							if (!f2.getName().equals("test." + l2) && !f2.getName().equals("test." + l1)){
+								System.out.println(f2 + " DELETED");
+								f2.delete();
+							}
+						}
+
+					}
+					else if (name.equals("eval")){
+						for (File f2 : dir.listFiles()){
+							if (!f2.getName().equals("eval." + l2) && !f2.getName().equals("eval." + l1)){
+								System.out.println(f2 + " DELETED");
+								f2.delete();
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 
 	public JAligner(NewCommandLineArguments c){
 		cmdArgs = c;
@@ -96,10 +135,20 @@ public class JAligner{
 
 	}
 
+
+	public static void executeBashCommand(String command){
+		try{
+			Runtime.getRuntime().exec(command).waitFor();
+		}
+		catch(Exception e){
+			System.out.println(e.getMessage());
+		}
+
+	}
+
 	public void train(){
 
 		try {
-			System.out.println("Generating Negative eval examples...");
 			generateNewNegativeSentences(numNegativeTrainingSentences, 
 					positiveL1TrainingFile,
 					positiveL2TrainingFile,
@@ -108,8 +157,8 @@ public class JAligner{
 			String l1 = cmdArgs.getL1();
 			String l2 = cmdArgs.getL2();
 			//Make Negative Examples
-			JAlignFileUtils.executeBashCommand("mv " + cmdArgs.getBadLexweightsPath(l1) + " " + cmdArgs.getGoodLexweightsPath(l1));
-			JAlignFileUtils.executeBashCommand("mv " + cmdArgs.getBadLexweightsPath(l2) + " " + cmdArgs.getGoodLexweightsPath(l2));
+			executeBashCommand("mv " + cmdArgs.getBadLexweightsPath(l1) + " " + cmdArgs.getGoodLexweightsPath(l1));
+			executeBashCommand("mv " + cmdArgs.getBadLexweightsPath(l2) + " " + cmdArgs.getGoodLexweightsPath(l2));
 
 
 			ClassifierWrapper standfordClassifier = new ClassifierWrapper(cmdArgs);
@@ -129,8 +178,6 @@ public class JAligner{
 
 	public void eval(){
 		try{
-			System.out.println();
-			System.out.println("Generating Negative eval examples...");
 			generateNewNegativeSentences(numNegativeEvalSentences, 
 					positiveL1EvalFile,
 					positiveL2EvalFile,
@@ -142,10 +189,11 @@ public class JAligner{
 			s.score("nonparallel", negativeL1EvalFile, negativeL2EvalFile, dataWriter);
 			dataWriter.flush();
 			dataWriter.close();
+			
+			
 			ClassifierWrapper standfordClassifier = new ClassifierWrapper(cmdArgs);
 			standfordClassifier.parseResultsEval();
-			System.out.println(cmdArgs.getRoot() + "results.txt");
-
+			System.out.println("Extracted parallel sentences available at: " + cmdArgs.getParallelSentenceFile());
 			Fscore.getScores(cmdArgs);	
 
 		} catch (IOException e) {
@@ -156,7 +204,6 @@ public class JAligner{
 
 	public void test(){
 		try{
-			System.out.println("Generating Negative training examples...");
 			generateNewNegativeSentences(numNegativeTestingSentences, 
 					positiveL1TestingFile,
 					positiveL2TestingFile,
@@ -170,6 +217,7 @@ public class JAligner{
 			dataWriter.close();
 			ClassifierWrapper standfordClassifier = new ClassifierWrapper(cmdArgs);
 			standfordClassifier.parseResults();
+			System.out.println("Extracted parallel sentences available at: " + cmdArgs.getParallelSentenceFile());
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -194,14 +242,14 @@ public class JAligner{
 					break;
 				l1Sens.add(line);
 			}
-			
+
 			i = 0;
 			while ((line = l2_input.readLine()) != null){
 				if (++i > number)
 					break;
 				l2Sens.add(line);
 			}
-			
+
 			assert(l1Sens.size() == l2Sens.size());
 			int firstIndex = 0;
 			int lastIndex = l1Sens.size();
@@ -211,7 +259,7 @@ public class JAligner{
 				l2_writer.println(l2Sens.get(lastIndex));
 
 			}
-			
+
 			l1_writer.flush();
 			l1_writer.close();
 			l2_writer.flush();

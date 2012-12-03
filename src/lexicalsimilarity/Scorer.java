@@ -10,7 +10,6 @@ import objects.NewSentencePair;
 import objects.Sentence;
 import objects.SentencePair;
 import objects.Word;
-import utils.JAlignFilePaths;
 
 public class Scorer {
 
@@ -20,7 +19,6 @@ public class Scorer {
 	private HashMap<String, HashMap<String, Double>> L1toL2LexWeights = new HashMap<String, HashMap<String, Double>> ();
 	private HashMap<String, HashMap<String, Double>>  L2toL1LexWeights = new HashMap<String, HashMap<String, Double>> ();
 	private String l1,l2;
-	public LanguageModel l1Model, l2Model;
 
 
 	NewCommandLineArguments cmdArgs;	
@@ -169,12 +167,6 @@ public class Scorer {
 		ArrayList<String> l1Words = l1Sentence.getWords();
 		ArrayList<String> l2Words = l2Sentence.getWords();
 
-		//Mark the stop words
-		l1StopWords = l1Model.detectStopWords();
-		l1Sentence.markStopWords(l1StopWords);
-
-		l2StopWords  = l2Model.detectStopWords();
-		l2Sentence.markStopWords(l2StopWords);
 
 		//Mark the OOV tokens
 		l1Sentence.markOOVWords(L1toL2LexWeights);
