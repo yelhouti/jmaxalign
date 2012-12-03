@@ -9,11 +9,20 @@ import java.io.PrintWriter;
 
 public class TMXParser {
 
-
+	private static String opusFile;
 
 	public static void main(String[] args) {
-		String root = "/home/max/omg/subtitles/";
-		splitIntoTrainingAndTestingData("de", "he", root + "train/train.de", root + "train/train.he", root + "eval/eval.de", root + "eval/eval.he", 25000, 25000);
+		String l1 = "en";							
+		String l2 = "es";
+		String root = "/home/max/week/" + l1 + "-" + l2 + "/"; 
+		TMXParser.opusFile = root + "OpenSubtitles2011" + l1 + "-" + l2 + ".tmx";
+		splitIntoTrainingAndTestingData(l1, l2, 
+				root + "train/train."+ l1, 
+				root + "train/train." + l2, 
+				root + "eval/eval." + l1, 
+				root + "eval/eval." + l2,
+				15000, //train data 
+				10000); //eval data
 	}
 	/**
 	 * This class can parse a TMX file downloadable from the Open Source Parallel Subtitles corpus V2,
@@ -27,11 +36,10 @@ public class TMXParser {
 
 		boolean switchedToTest = false;
 		try{
-			JAlignFilePaths j = JAlignFilePaths.getInstance();
 
-			BufferedReader tmxReader = new BufferedReader(new FileReader(new File("/home/max/finaltest/corpora/de-he/OpenSubtitles2011de-he.tmx")));			
-			PrintWriter l1_output = new PrintWriter(new FileWriter(new File(l1TrainOutputPath), true));
-			PrintWriter l2_output = new PrintWriter(new FileWriter(new File(l2TrainOutputPath), true));
+			BufferedReader tmxReader = new BufferedReader(new FileReader(new File(opusFile)));			
+			PrintWriter l1_output = new PrintWriter(new FileWriter(new File(l1TrainOutputPath)));
+			PrintWriter l2_output = new PrintWriter(new FileWriter(new File(l2TrainOutputPath)));
 
 			String line;
 
@@ -46,11 +54,11 @@ public class TMXParser {
 					l2_output.flush();
 					l1_output.close();
 					l2_output.close();
-					 l1_output = new PrintWriter(new FileWriter(new File(l1TestOutputPath), true));
-					 l2_output = new PrintWriter(new FileWriter(new File(l2TestOutputPath), true));
+					 l1_output = new PrintWriter(new FileWriter(new File(l1TestOutputPath)));
+					 l2_output = new PrintWriter(new FileWriter(new File(l2TestOutputPath)));
 
 				}
-				//we also aprsed all the raining data
+				//we also parsed all the raining data
 				if (i>= (testingData + trainingData)  && (switchedToTest) ){
 					break;
 				}

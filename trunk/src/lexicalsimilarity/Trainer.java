@@ -3,11 +3,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
 
 import main.NewCommandLineArguments;
 import objects.Sentence;
-import utils.JAlignFilePaths;
 import edu.berkeley.nlp.fig.exec.Execution;
 import edu.berkeley.nlp.wordAlignment.EMWordAligner;
 import edu.berkeley.nlp.wordAlignment.Evaluator;
@@ -20,10 +18,8 @@ import edu.berkeley.nlp.wordAlignment.distortion.TreeWalkModel;
  */
 public class Trainer{
 	private NewCommandLineArguments cmdArgs; 
-	private HashMap<String, String> onlyPairsL1 = new HashMap<String, String>();
-	private HashMap<String, String> onlyPairsL2 = new HashMap<String, String>();
 
-	JAlignFilePaths j = JAlignFilePaths.getInstance();
+
 
 
 	public Trainer(NewCommandLineArguments c){

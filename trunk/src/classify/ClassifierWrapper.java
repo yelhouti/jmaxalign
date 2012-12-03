@@ -9,7 +9,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import main.NewCommandLineArguments;
-import utils.JAlignFilePaths;
 import edu.stanford.nlp.classify.Classifier;
 import edu.stanford.nlp.classify.ColumnDataClassifier;
 import edu.stanford.nlp.ling.Datum;
@@ -26,7 +25,6 @@ public class ClassifierWrapper{
 	public void generateConfigFile(){
 		try{
 			File out = new File(cmdArgs.getClassifierPropertiesFile());
-			System.out.println(out);
 			PrintWriter configOutput = new PrintWriter(new FileWriter(out));
 			configOutput.println("#");
 			configOutput.println("# Features");
@@ -68,13 +66,12 @@ public class ClassifierWrapper{
 		}
 	}
 
-	
-	
 
-	
+
+
+
 	public void parseResults(){
 		try{
-			JAlignFilePaths j = JAlignFilePaths.getInstance();
 
 
 			PrintWriter out = new PrintWriter(new FileWriter(new File(cmdArgs.getClassifierOutputRawFile())));
@@ -93,20 +90,17 @@ public class ClassifierWrapper{
 				}
 				out.println(line + "  ==>  " + cl.classOf(d));
 			}
-			score(cmdArgs.getL1TestAbsoluteFile(), cmdArgs.getL2TestAbsoluteFile(), cmdArgs.getClassifierOutputUsableFile(), correctLines);
-			
-			
+			extractParallelSentences(cmdArgs.getL1TestAbsoluteFile(), cmdArgs.getL2TestAbsoluteFile(), cmdArgs.getParallelSentenceFile(), correctLines);
+
+
 			out.flush();
 		}
 		catch(IOException e){System.out.println(e.getMessage());
 		}
 	}
-	
+
 	public void parseResultsEval(){
 		try{
-			JAlignFilePaths j = JAlignFilePaths.getInstance();
-
-
 			PrintWriter out = new PrintWriter(new FileWriter(new File(cmdArgs.getClassifierOutputRawFile())));
 
 			//	generateConfigFile(l1,l2);
@@ -123,42 +117,49 @@ public class ClassifierWrapper{
 				}
 				out.println(line + "  ==>  " + cl.classOf(d));
 			}
-			score(cmdArgs.getL1TestAbsoluteFile(), cmdArgs.getL2TestAbsoluteFile(), cmdArgs.getClassifierOutputUsableFile(), correctLines);
-			
-			
+			extractParallelSentences(cmdArgs.getL1EvalFile(), cmdArgs.getL2EvalFile(), cmdArgs.getParallelSentenceFile(), correctLines);
+
+
 			out.flush();
 		}
 		catch(IOException e){System.out.println(e.getMessage());
 		}
 	}
-	
 
-	public void score(String l1SenPath, String l2SenPath, String outputPath, ArrayList<Integer> correctLines){
+
+	public void extractParallelSentences(String l1SenPath, String l2SenPath, String outputPath, ArrayList<Integer> correctLines){
 		try{
 			BufferedReader l1_reader = new BufferedReader(new FileReader(new File(l1SenPath)));
 			BufferedReader l2_reader = new BufferedReader(new FileReader(new File(l2SenPath)));
-			PrintWriter dataWriter = new PrintWriter(new FileWriter(new File(outputPath)));
+			PrintWriter parallelDataWriter = new PrintWriter(new FileWriter(new File(outputPath)));
+
 			String l1_sentence, l2_sentence;
 			int i = 0;
 			while ((l1_sentence = l1_reader.readLine()) != null){
 				i++;
 				l2_sentence = l2_reader.readLine();
 				if (correctLines.contains(i)){
-					dataWriter.println("**"+ i + "**");
-					dataWriter.println(l1_sentence);
-					dataWriter.println(l2_sentence);
-					dataWriter.println("*****");
+					parallelDataWriter.println("**"+ i + "**");
+					parallelDataWriter.println(l1_sentence);
+					parallelDataWriter.println(l2_sentence);
 				}
-				dataWriter.flush();
+				else{
+					if (correctLines.contains(i)){
+						parallelDataWriter.println("**"+ i + "**");
+						parallelDataWriter.println(l1_sentence);
+						parallelDataWriter.println(l2_sentence);
+					}
+				}
+				parallelDataWriter.flush();
 			}
-			dataWriter.flush();
+			parallelDataWriter.flush();
+			parallelDataWriter.close();
 		}
 		catch(IOException e){System.out.println(e.getMessage());}
 	}
-	
+
 	public void evaluateResults(){
 		try{
-			JAlignFilePaths j = JAlignFilePaths.getInstance();
 
 
 			PrintWriter out = new PrintWriter(new FileWriter(new File(cmdArgs.getClassifierOutputRawFile())));
@@ -177,14 +178,14 @@ public class ClassifierWrapper{
 				}
 				out.println(line + "  ==>  " + cl.classOf(d));
 			}
-			score(cmdArgs.getL1TestAbsoluteFile(), cmdArgs.getL2TestAbsoluteFile(), cmdArgs.getClassifierOutputUsableFile(), correctLines);
-			
-			
+			extractParallelSentences(cmdArgs.getL1TestAbsoluteFile(), cmdArgs.getL2TestAbsoluteFile(), cmdArgs.getParallelSentenceFile(), correctLines);
+
+
 			out.flush();
 		}
 		catch(IOException e){System.out.println(e.getMessage());
 		}
 	}
-	
-	
+
+
 }

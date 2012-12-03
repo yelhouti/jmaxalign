@@ -26,14 +26,19 @@ public class Fscore {
 				int lastIndex = datum.length - 1;
 				String actualClass = datum[0];
 				String classifiedClass = datum[lastIndex].replaceAll("[^a-zA-Z]", "");
-				if ( (actualClass.equals(parallelClass)) && classifiedClass.equals(parallelClass))
+				if ( (actualClass.equals(parallelClass)) && classifiedClass.equals(parallelClass)){
 					truePositive++;
-				else if ( (actualClass.equals(parallelClass)) && classifiedClass.equals(nonParallelClass))
+				}
+				else if ( (actualClass.equals(parallelClass)) && classifiedClass.equals(nonParallelClass)){
 					falsePositive++;
-				else if ( (actualClass.equals(nonParallelClass)) && classifiedClass.equals(nonParallelClass))
+				}
+				else if ( (actualClass.equals(nonParallelClass)) && classifiedClass.equals(nonParallelClass)){
 					trueNegative++;
-				else if ( (actualClass.equals(nonParallelClass)) && classifiedClass.equals(parallelClass))
-					falseNegative++;				
+				}
+				else if ( (actualClass.equals(nonParallelClass)) && classifiedClass.equals(parallelClass)){
+					falseNegative++;			
+				}
+				
 			}
 		
 			

@@ -68,7 +68,6 @@ public class NewSentence {
 	}
 	
 	public void markOOVWords(HashMap<String, HashMap<String, Double>> listofOOVWords){
-		int oovTokens = 0;
 		for (int i = 0; i < words.size(); i ++ ){
 			if (!(listofOOVWords.containsKey(words.get(i)))){
 				words.get(i).setOutOfVocabularyWord(true);
